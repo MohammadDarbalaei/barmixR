@@ -1,0 +1,9 @@
+/doc/
+/Meta/
+*.zip
+vignettes/*_cache/
+vignettes/*_files/
+vignettes/*.html
+.Rhistory
+.RData
+.Rproj.user

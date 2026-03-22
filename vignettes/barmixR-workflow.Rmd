@@ -1,0 +1,408 @@
+---
+title: "barmixR: Bayesian Modeling of Barcoded Tumor Mixtures for Quantitative Treatment Resistance Analysis"
+author: |
+  Mohammad Darbalaei  
+  Daniel Hoffmann  
+  Bioinformatics and Computational Biophysics, Faculty of Biology, University of Duisburg-Essen
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{barmixR: Bayesian Modeling of Barcoded Tumor Mixtures for Quantitative Treatment Resistance Analysis}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE
+)
+```
+
+# Overview
+
+Tumor heterogeneity is a major challenge in cancer research and precision oncology. In many cancers, including gastrointestinal stromal tumors (GIST), tumors are not uniform but consist of multiple genetically distinct subclones. These subclones can respond differently to treatment, and resistant populations often emerge during therapy due to secondary mutations in the **KIT** receptor or downstream signaling pathways.
+
+Understanding how different genotypes respond to treatment is therefore essential. However, studying each clone individually is time-consuming and does not capture how clones behave when they grow together and compete within the same environment.
+
+## Multiplexed experiments with DNA barcoding
+
+To overcome these limitations, **DNA barcoding** enables multiplexed experiments in which many clones are pooled and analyzed simultaneously. In this approach, each clone is labeled with a unique DNA barcode. After treatment, high-throughput sequencing is used to count these barcodes, allowing researchers to track how the composition of the population changes over time.
+
+This makes it possible to study many genotypes in parallel within a single experiment, greatly increasing scalability and efficiency.
+
+## The compositional data challenge
+
+A key limitation of barcode sequencing data is that it provides only **relative abundances**. Because these data are **compositional**, all clone fractions within a sample are constrained to sum to one.
+
+Consequently, relative changes cannot be directly interpreted as absolute changes in clone size. An increase in one clone’s fraction necessarily implies a decrease in others, even if all clones are expanding. Conversely, a clone may appear to decline despite continued growth, simply because competing clones expand more rapidly.
+
+Relative changes alone are therefore insufficient to determine whether a treatment truly **suppresses or enhances clonal growth**.
+
+## Integrating population size information
+
+To resolve this limitation, measurements of total population size are required.  
+The appropriate measurement depends on the experimental setting:
+
+- tumor volume in *in vivo* experiments  
+- cellular confluency in *in vitro* experiments  
+
+These measurements capture how the *entire population* expands or contracts under treatment and enable interpretation of clonal dynamics on an absolute scale.
+
+## The barmixR framework
+
+The **barmixR framework** combines both data sources:
+
+- **Barcode sequencing counts**, capturing relative clonal composition
+- **Population size measurements**, capturing overall population growth
+
+By jointly modeling these data in a **Bayesian hierarchical framework**, barmixR estimates clone-specific treatment effects on an absolute scale while accounting for uncertainty in both measurements.
+
+The central output of the model is **quantitative treatment resistance (QTR)**, which describes how each clone responds to treatment compared to a control condition:
+
+- **QTR < 0** → treatment sensitivity
+- **QTR = 0** → neutral response
+- **QTR > 0** → treatment resistance
+
+## Scope and applications
+
+Although barmixR was developed for multiplexed tumor experiments, the underlying approach is broadly applicable. Any experiment that combines:
+
+- pooled populations
+- barcode-based measurements
+- total population size readouts
+
+can benefit from this framework.
+
+Examples include:
+
+- CRISPR-based pooled screens
+- lineage tracing experiments
+- competitive growth assays in mixed populations
+
+
+# Simulation of Barcode Counts and Population Size
+
+To demonstrate the barmixR workflow, we generate a synthetic dataset that captures key features of multiplexed barcoded experiments.
+
+The simulation includes **20 clones**, **4 conditions** (one control and three treatments), and **5 replicates per condition**. For each sample, we simulate:
+
+- **Barcode sequencing counts**, representing *relative clonal composition*  
+- **Population size measurements**, representing *total growth* (e.g., tumor volume or confluency)
+
+## Barcode counts
+
+Counts are generated from a **Dirichlet–multinomial distribution**, reflecting overdispersion in sequencing data.  
+Clones are grouped into subsets with different treatment-specific patterns (enriched, neutral, or depleted), introducing structured heterogeneity across conditions.
+
+## Population size
+
+Total population sizes are simulated using a **log-normal distribution**, capturing the variability and skewness typical of tumor growth. Treatment conditions differ in their overall growth behavior relative to control.
+
+## Integration
+
+The simulation reflects the core principle of barmixR: combining relative composition and total population size to define the **fractional size** for each **cell line** \(l\) and **condition** \(k\):
+
+$$
+\nu_l^{(k)} = p_l^{(k)} \cdot V^{(k)}, \quad l = 1,\dots,L,\; k = 1,\dots,K
+$$
+
+where \(l\) indexes **cell lines** and \(k\) indexes **treatment conditions**.
+
+
+```{r}
+library(MGLM)
+library(tidyverse)
+library(barmixR)
+
+set.seed(1001)
+
+k <- 20
+n_reps <- 5
+n_reads <- 10000
+
+conditions <- c("DMSO","TreatA","TreatB","TreatC")
+
+generate_profile <- function(pattern,k){
+  breaks <- floor(seq(0,k,length.out=length(pattern)+1))
+  prof <- numeric(k)
+  for(i in seq_along(pattern)){
+    idx <- (breaks[i]+1):breaks[i+1]
+    prof[idx] <- pattern[i]
+  }
+  prof + runif(k,0,0.1)
+}
+
+alpha_profiles <- list(
+  DMSO   = rep(1/k,k),
+  TreatA = generate_profile(c(5.5,1.1,0.25),k),
+  TreatB = generate_profile(c(0.2,6,1.0),k),
+  TreatC = generate_profile(c(1.05,0.5,4),k)
+)
+
+all_data <- list()
+
+for(cond in conditions){
+
+  alpha <- alpha_profiles[[cond]]
+  alpha_scaled <- alpha/sum(alpha)*50
+
+  mat <- rdirmn(n_reps,n_reads,alpha_scaled)
+
+  rownames(mat) <- paste0(cond,"_rep",1:n_reps)
+  colnames(mat) <- paste0("clone",1:k)
+
+  all_data[[cond]] <- mat
+}
+
+data_count <- do.call(rbind,all_data)
+```
+
+# Structure of the Simulated Barcode Data
+
+The object `data_count` contains the simulated barcode sequencing
+counts for all samples. Each row corresponds to a replicate sample
+under a specific treatment condition, and each column corresponds
+to one of the barcoded clones.
+
+The entries in this matrix represent the number of sequencing reads
+assigned to each barcode in a given sample. Because sequencing
+measures relative composition, these counts primarily reflect the
+relative abundance of clones within the pooled population.
+
+```{r}
+print(data_count[1:6,1:8])
+```
+
+In this preview:
+
+- **Rows** represent replicate samples (e.g., `DMSO_rep1`, `TreatA_rep2`)
+- **Columns** represent individual clones (`clone1`, `clone2`, ...)
+- **Values** represent sequencing counts assigned to each barcode
+
+These counts form the input to the barcode component of the barmixR
+model, which estimates clone composition under each treatment
+condition.
+
+# Population Size Simulation
+
+To complement the compositional barcode data, we simulate total
+population sizes. In an *in vivo* setting, these correspond to tumor
+volumes; in an *in vitro* setting, analogous measurements could be
+cellular confluency.
+
+```{r}
+get_lognorm_params <- function(mean,sd){
+
+  sigma2 <- log(1+(sd/mean)^2)
+  mu <- log(mean)-sigma2/2
+  sigma <- sqrt(sigma2)
+
+  list(meanlog=mu,sdlog=sigma)
+}
+
+params_t0 <- get_lognorm_params(120,75)
+params_t14 <- get_lognorm_params(600,500)
+
+sim_vols <- function(params,seed){
+  set.seed(seed)
+  rlnorm(n_reps,params$meanlog,params$sdlog)
+}
+
+DMSO_t0 <- sim_vols(params_t0,1)
+DMSO_t14 <- sim_vols(params_t14,101)
+
+cond_means <- c(0.5,0.8,0.25)*600
+cond_params <- lapply(cond_means,get_lognorm_params,sd=500)
+
+cond1_t14 <- sim_vols(cond_params[[1]],102)
+cond2_t14 <- sim_vols(cond_params[[2]],103)
+cond3_t14 <- sim_vols(cond_params[[3]],104)
+
+V_t0 <- round(c(DMSO_t0,DMSO_t0,DMSO_t0,DMSO_t0),1)
+V_t14 <- round(c(DMSO_t14,cond1_t14,cond2_t14,cond3_t14),1)
+```
+
+# Constructing the barmixR Input Object
+
+To run the barmixR model, all required information is organized into
+a structured list. This list includes barcode counts, treatment
+labels, population-size measurements, and clone identifiers.
+
+```{r}
+condition_count <- factor(
+  sub("_rep[0-9]+$","",rownames(data_count)),
+  levels=conditions
+)
+
+cell_line <- factor(paste0("clone",1:k))
+
+data <- list(
+  data_count=data_count,
+  condition_count=condition_count,
+  V=V_t14,
+  VT0=V_t0,
+  condition_v=condition_count,
+  cell_line=cell_line
+)
+
+time_d <- 14
+```
+
+```{r}
+print(data)
+```
+
+# Bayesian Model Fitting
+
+For demonstration purposes, we use a reduced number of posterior sampling iterations to shorten computation time.  
+In practical applications, longer sampling runs are recommended to ensure stable and well-mixed posterior estimates.
+```{r model_fit, cache=TRUE}
+fit <- barmixRQTR(
+  data=data,
+  time_d=time_d,
+  control=list(
+    chains=2,
+    iter_count=500, # reduced number of posterior sampling iterations for demonstration
+    iter_V=500,     # reduced number of posterior sampling iterations for demonstration
+    cores=2
+  ),
+  in_vivo=TRUE
+)
+
+model <- fit
+```
+The model is estimated using **Hamiltonian Monte Carlo (HMC)** via Stan.
+
+Posterior sampling produces probability distributions for all parameters, including clone compositions, population sizes, and treatment resistance.
+
+
+# Posterior Predictive Checks for Barcode Counts
+
+```{r fig.width=14, fig.height=8, out.width="100%"}
+ppc_barcode <- ppcBarcodes(model)
+print(ppc_barcode$ppc_plot)
+```
+
+
+# Estimating Ratios of Relative Barcode Abundance
+
+We next estimate ratios of relative barcode abundance between
+treatment groups and the control condition.
+
+```{r fig.width=18, fig.height=8, out.width="100%"}
+sampled_fraction <- ppc_barcode$sampled_fraction
+
+fraction_ratio_results <- fractionRatio(model, sampled_fraction)
+
+fraction_ratio_results$plot_ratio_fraction
+```
+
+
+
+# Posterior Predictive Check for Population Size
+
+```{r fig.width=18, fig.height=8, out.width="100%"}
+ppc_population_results <- ppcPopulation(model)
+
+ppc_population_results$ppc_plot
+```
+
+```{r}
+sampled_population <- ppc_population_results$sampled_population
+```
+
+# Estimating Ratios of Population Size
+
+```{r fig.width=18, fig.height=8, out.width="100%"}
+population_ratio_results <- populationRatio(model, sampled_population)
+
+population_ratio_results$plot_ratio_population
+```
+
+# Estimation of Quantitative Treatment Resistance
+
+```{r fig.width=18, fig.height=7, out.width="100%"}
+resistance <- QTRresistance(
+  model,
+  fraction_ratio_results$li_sam_ratio_relative,
+  population_ratio_results$li_sam_ratio_V
+)
+
+print(resistance$treatment_resistance)
+```
+The **Quantitative Treatment Resistance (QTR)** is inferred by integrating information from:
+
+- relative barcode abundance (clonal composition)  
+- total population size (e.g., tumor volume or confluency)  
+
+within a joint Bayesian framework. This approach propagates uncertainty from both data sources to obtain posterior distributions of treatment response for each clone–treatment pair.
+
+Each QTR value represents the **log-scale change in fractional clone size under treatment relative to control**.
+
+## Interpretation
+
+- **QTR < 0** → treatment sensitivity (clone grows less than in control)  
+- **QTR = 0** → neutral response (no difference compared to control)  
+- **QTR > 0** → treatment resistance (clone grows more than in control)  
+
+When visualized (e.g., as density plots or violin plots), each distribution reflects the **posterior uncertainty** of treatment resistance for a given genotype–treatment combination. A vertical reference line at zero separates the **sensitive** and **resistant** regimes.
+
+
+# Visualization of the Resistance Landscape
+
+```{r fig.width=18, fig.height=10, out.width="100%"}
+heatmap <- QTRheatmap(
+  model,
+  resistance$summary_table
+)
+
+print(heatmap$heatmap_within)
+```
+
+```{r fig.width=6, fig.height=12, out.width="100%"}
+print(heatmap$heatmap_treatment)
+```
+
+The heatmap summarizes **clone-specific quantitative treatment resistance (QTR)** across all treatments and cell lines, enabling direct comparison of drug effects in a multiplexed setting.
+
+In analogy to the bubble plot representation used in the main analysis, QTR values can be interpreted jointly in terms of direction and magnitude:
+
+- **color** represents the **direction of QTR**  
+  - **blue** → sensitivity (treated cells grow slower than under control)  
+  - **red** → resistance (treated cells grow faster than under control)  
+
+- the **magnitude of QTR** (posterior mean) reflects the **strength of differential clonal growth under treatment relative to control**
+
+This visualization provides a global overview of treatment performance across clones and highlights genotype-specific differences in drug response, facilitating intuitive comparison across all genotype–drug combinations.
+
+
+# Decision Support for Treatment Prioritization
+
+One practical goal of multiplexed barcoded experiments is to enable treatment prioritization across genetically distinct tumor subclones. Pooled barcoding approaches were developed to increase throughput, support internally controlled comparisons, and make large-scale genotype-specific drug testing more feasible in preclinical research. In this setting, ranking treatment effects across genotypes can help highlight mutation-specific vulnerabilities while reducing the number of separate follow-up experiments needed for compound selection.
+
+The `QTRDecision()` function summarizes posterior QTR distributions for each cell line and treatment using median, interquartile range, and whiskers derived from `QTRresistance()`. This provides a compact ordering of candidate treatments within each genotype and supports comparison of drug performance across heterogeneous cell populations.
+
+```{r fig.width=18, fig.height=12, out.width="100%"}
+cell_order <- paste0("clone", 1:20)
+
+decision <- QTRDecision(
+  model = model,
+  summary_table = resistance$summary_table,
+  cell_order = cell_order,
+  ncol = 5
+  # legend_text = "DMSO = control condition"
+)
+
+print(decision$rank_plot)
+
+```
+In the ranking panel, treatments are ordered within each cell line by their posterior median QTR. Values further to the left indicate lower QTR and therefore greater treatment sensitivity, whereas values further to the right indicate higher QTR and therefore greater resistance. The box shows the interquartile range, the central line marks the median, and the whiskers summarize the lower and upper bounds of the displayed posterior interval.
+
+This type of ranking can support preclinical treatment prioritization by helping to:
+
+- identify treatments with lower resistance across specific genotypes
+- compare candidate compounds or combinations within the same experimental framework
+- improve resource efficiency in large drug-screening programs
+
+In translational and pharmaceutical settings, this kind of summary may be useful as an early prioritization layer for selecting compounds, dose ranges, or combinations for additional validation.

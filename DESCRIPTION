@@ -1,0 +1,64 @@
+Package: barmixR
+Type: Package
+Title: Bayesian Modeling of Barcoded Tumor Mixtures for Quantitative Treatment Resistance Analysis
+Version: 0.99.0
+Authors@R: 
+    c(
+      person(given = "Mohammad", family = "Darbalaei",
+             email = "mohammad.darbalaei@uni-due.de",
+             role = c("aut", "cre")),
+      person(given = "Daniel", family = "Hoffmann",
+             role = "aut",
+             comment = c(ORCID = "0000-0003-2973-7869"))
+    )
+Description:
+    Implements the Bayesian modeling framework underlying the barmixR
+    (BARcode MIXture analysis) platform for high-throughput quantitative
+    analysis of genotype-specific treatment responses in pooled cancer
+    cell populations. The package integrates barcode sequencing count
+    data with volumetric measurements such as tumor volume (in vivo) or
+    cellular confluency (in vitro) using hierarchical probabilistic
+    models. Barcode counts are modeled with a Dirichlet–multinomial
+    distribution to account for compositional sequencing data, while
+    volumetric measurements are modeled using log-normal (tumor volume)
+    or beta (confluency) likelihoods. Posterior inference is performed
+    using Hamiltonian Monte Carlo through 'rstan'. The resulting
+    posterior distributions enable estimation of clone-specific
+    quantitative treatment resistance (QTR) together with uncertainty
+    propagation from both sequencing and volumetric data. Additional
+    functions provide posterior predictive checks, estimation of
+    resistance ratios, treatment ranking, and visualization of resistance
+    landscapes using violin plots and bubble heatmaps. The methods are
+    designed for multiplexed lineage-tracing experiments in cancer
+    research and were developed to analyze treatment resistance in
+    gastrointestinal stromal tumors (GIST), but are broadly applicable to
+    barcoding-based studies of treatment response and clonal dynamics
+    across diverse cancer types.
+License: GPL-3
+URL: https://github.com/MohammadDarbalaei/barmixR
+BugReports: https://github.com/MohammadDarbalaei/barmixR/issues
+Encoding: UTF-8
+LazyData: false
+Depends:
+    R (>= 4.1)
+Imports:
+    rstan,
+    ggplot2,
+    dplyr,
+    patchwork,
+    forcats,
+    BiocParallel,
+    stats
+Suggests:
+    knitr,
+    rmarkdown,
+    testthat
+VignetteBuilder: knitr
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+biocViews:
+    Software,
+    Bayesian,
+    Sequencing,
+    Visualization
+    
