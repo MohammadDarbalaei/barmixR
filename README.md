@@ -60,7 +60,7 @@ Install the development version from GitHub:
 if (!requireNamespace("remotes", quietly = TRUE))
   install.packages("remotes")
 
-remotes::install_github("MohammadDarbalai/barmixR")
+remotes::install_github("MohammadDarbalaei/barmixR")
 ```
 
 ---
