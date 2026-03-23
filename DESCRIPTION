@@ -6,10 +6,17 @@ Authors@R:
     c(
       person(given = "Mohammad", family = "Darbalaei",
              email = "mohammad.darbalaei@uni-due.de",
-             role = c("aut", "cre")),
+             role = c("aut", "cre"),
+             comment = c(ORCID = "0009-0003-4561-0048")),
       person(given = "Daniel", family = "Hoffmann",
              role = "aut",
-             comment = c(ORCID = "0000-0003-2973-7869"))
+             comment = c(ORCID = "0000-0003-2973-7869")),
+      person(given = "Barbara M.", family = "Grüner",
+             role = "ctb"),
+      person(given = "Thomas", family = "Mühlenberg",
+             role = "ctb"),
+      person(given = "Julia", family = "Zummack",
+             role = "ctb")
     )
 Description:
     Implements the Bayesian modeling framework underlying the barmixR
@@ -40,7 +47,7 @@ BugReports: https://github.com/MohammadDarbalaei/barmixR/issues
 Encoding: UTF-8
 LazyData: false
 Depends:
-    R (>= 4.1)
+    R (>= 4.3.0)
 Imports:
     rstan,
     ggplot2,
