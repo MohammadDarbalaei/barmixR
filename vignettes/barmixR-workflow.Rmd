@@ -406,3 +406,7 @@ This type of ranking can support preclinical treatment prioritization by helping
 - improve resource efficiency in large drug-screening programs
 
 In translational and pharmaceutical settings, this kind of summary may be useful as an early prioritization layer for selecting compounds, dose ranges, or combinations for additional validation.
+
+```{r session-info}
+sessionInfo()
+```
