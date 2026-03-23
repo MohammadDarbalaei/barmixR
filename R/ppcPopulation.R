@@ -57,8 +57,14 @@
 #'
 #' # barcode count matrix (4 samples x 5 clones)
 #' data_count <- matrix(
-#'   sample(1:50, 20, replace = TRUE),
-#'   nrow = 4
+#'   c(
+#'     20, 22, 24, 23, 21,   # DMSO_rep1
+#'     21, 23, 25, 22, 20,   # DMSO_rep2
+#'     26, 25, 22, 20, 18,   # TreatA_rep1
+#'     25, 24, 23, 21, 19    # TreatA_rep2
+#'   ),
+#'   nrow = 4,
+#'   byrow = TRUE
 #' )
 #'
 #' colnames(data_count) <- paste0("clone", 1:5)
@@ -69,7 +75,7 @@
 #' condition_count <- factor(c("DMSO", "DMSO", "TreatA", "TreatA"))
 #'
 #' # population size (e.g. tumor volume)
-#' V <- c(100, 120, 300, 280)
+#' V <- c(300, 280, 100, 120)
 #'
 #' # assemble input
 #' data <- list(
@@ -80,9 +86,9 @@
 #'   cell_line = factor(colnames(data_count))
 #' )
 #'
-#' ## ---------------------------
-#' ## Fit model (fast settings)
-#' ## ---------------------------
+#' ## Fit model (fast settings for example only)
+#' ## Note: iteration numbers are intentionally small to ensure the example runs quickly.
+#' ## For real analysis, increase iterations (e.g., 10000) and use multiple chains.
 #'
 #' fit <- barmixRQTR(
 #'   data = data,
