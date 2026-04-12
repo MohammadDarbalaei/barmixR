@@ -1,5 +1,9 @@
 # R package: barmixR
 
+**Please cite:**
+
+Darbalaei, M., Mühlenberg, T., Zummack, J., Dujardin, P., Grunewald, S., Baginska, A., Munteanu, P., Martinez Cruz, M., Dorsch, M., Schramm, A., Bauer, S., Hoffmann, D. & Grüner, B. M. Quantifying Treatment Resistance in Mixtures of Gastrointestinal Stromal Tumor Cells with BARMIX. bioRxiv https://doi.org/10.64898/2026.03.23.713602 (2026).
+
 **Bayesian Modeling of Barcoded Tumor Mixtures for Quantitative Treatment Resistance Analysis**
 
 barmixR implements a Bayesian framework for analyzing treatment responses in pooled cancer cell populations labeled with genetic barcodes. The method integrates **barcode sequencing counts** with **population size measurements** to estimate clone-specific **quantitative treatment resistance (QTR)** while accounting for uncertainty in both sequencing and population size measurements through a unified Bayesian model.
