@@ -13,6 +13,9 @@ QTRDecision(
 )
 }
 \arguments{
+\item{model}{An object of class \code{\link{barmixR_fit}} returned by \code{\link{barmixRQTR}}
+containing \code{names_cell}.}
+
 \item{summary_table}{Data frame returned by \code{QTRresistance()}.
 It must contain the columns:
 \itemize{
@@ -32,9 +35,6 @@ of cell-line panels.}
 
 \item{legend_text}{Optional annotation shown beneath the combined
 figure.}
-
-\item{@param}{model An object of class \code{\link{barmixR_fit}} returned by \code{\link{barmixRQTR}}
-containing \code{names_cell}.}
 }
 \value{
 An object of class \code{barmixR_result} containing:

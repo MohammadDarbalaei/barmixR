@@ -340,7 +340,7 @@ QTRresistance <- function(
     ) +
     ggplot2::labs(
       x = "Cell line",
-      y = "Treatment resistance (logₑ)",
+      y = "Treatment resistance (log_e)",
       fill = "Cell line"
     ) +
     ggplot2::theme(

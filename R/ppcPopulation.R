@@ -224,7 +224,7 @@ ppcPopulation <- function(
   } else if (all(V > 0)) {
     "Tumor volume & uncertainty"
   } else {
-    stop("Data must be either 0–1 (confluency) or positive (tumor volume).")
+    stop("Data must be either 0-1 (confluency) or positive (tumor volume).")
   }
 
   y_label_Nor <- if (all(V >= 0 & V <= 1)) {

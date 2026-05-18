@@ -49,7 +49,7 @@ of barcode fractions obtained from the barmixR model.
 }
 \details{
 Posterior samples of barcode composition are derived from the
-Dirichlet–multinomial component of the model. Relative abundance
+Dirichlet-multinomial component of the model. Relative abundance
 ratios are calculated for each treatment relative to the control
 group and summarized using log-transformed values.
 }

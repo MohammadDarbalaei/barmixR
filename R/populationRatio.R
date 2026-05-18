@@ -266,9 +266,9 @@ populationRatio <- function(
     ggplot2::labs(
       x = "Treatment",
       y = if (in_vivo) {
-        "Tumor volume relative to control (logₑ)"
+        "Tumor volume relative to control (log_e)"
       } else {
-        "Confluency relative to control (logₑ)"
+        "Confluency relative to control (log_e)"
       }
     ) +
     ggplot2::theme(

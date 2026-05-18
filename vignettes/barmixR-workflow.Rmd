@@ -85,7 +85,7 @@ Examples include:
 
 To demonstrate the barmixR workflow, we generate a synthetic dataset that captures key features of multiplexed barcoded experiments.
 
-The simulation includes **20 clones**, **4 conditions** (one control and three treatments), and **5 replicates per condition**. For each sample, we simulate:
+The simulation includes **4 clones**, **2 conditions** (one control and one treatments), and **3 replicates per condition**. For each sample, we simulate:
 
 - **Barcode sequencing counts**, representing *relative clonal composition*  
 - **Population size measurements**, representing *total growth* (e.g., tumor volume or confluency)
@@ -117,45 +117,48 @@ library(barmixR)
 
 set.seed(1001)
 
-k <- 20
-n_reps <- 5
-n_reads <- 10000
+# --- Reduced size for vignette ---
+k <- 4              # number of clones (cell lines)
+n_reps <- 3         # fewer replicates
+n_reads <- 2000     # fewer sequencing reads
 
-conditions <- c("DMSO","TreatA","TreatB","TreatC")
+# Only control + one treatment
+conditions <- c("DMSO", "TreatA")
 
-generate_profile <- function(pattern,k){
-  breaks <- floor(seq(0,k,length.out=length(pattern)+1))
+# Helper function
+generate_profile <- function(pattern, k){
+  breaks <- floor(seq(0, k, length.out = length(pattern) + 1))
   prof <- numeric(k)
   for(i in seq_along(pattern)){
-    idx <- (breaks[i]+1):breaks[i+1]
+    idx <- (breaks[i] + 1):breaks[i + 1]
     prof[idx] <- pattern[i]
   }
-  prof + runif(k,0,0.1)
+  prof + runif(k, 0, 0.05)
 }
 
+# Define profiles (simplified)
 alpha_profiles <- list(
-  DMSO   = rep(1/k,k),
-  TreatA = generate_profile(c(5.5,1.1,0.25),k),
-  TreatB = generate_profile(c(0.2,6,1.0),k),
-  TreatC = generate_profile(c(1.05,0.5,4),k)
+  DMSO   = rep(1/k, k),
+  TreatA = generate_profile(c(2, 0.5), k)
 )
 
+# Simulate counts
 all_data <- list()
 
 for(cond in conditions){
 
   alpha <- alpha_profiles[[cond]]
-  alpha_scaled <- alpha/sum(alpha)*50
+  alpha_scaled <- alpha / sum(alpha) * 20  # smaller concentration
 
-  mat <- rdirmn(n_reps,n_reads,alpha_scaled)
+  mat <- rdirmn(n_reps, n_reads, alpha_scaled)
 
-  rownames(mat) <- paste0(cond,"_rep",1:n_reps)
-  colnames(mat) <- paste0("clone",1:k)
+  rownames(mat) <- paste0(cond, "_rep", 1:n_reps)
+  colnames(mat) <- paste0("clone", 1:k)
 
   all_data[[cond]] <- mat
 }
 
-data_count <- do.call(rbind,all_data)
+data_count <- do.call(rbind, all_data)
 ```
 
 # Structure of the Simulated Barcode Data
@@ -171,7 +174,7 @@ measures relative composition, these counts primarily reflect the
 relative abundance of clones within the pooled population.
 
 ```{r}
-print(data_count[1:6,1:8])
+print(data_count[1:2,1:2])
 ```
 
 In this preview:
@@ -192,35 +195,29 @@ volumes; in an *in vitro* setting, analogous measurements could be
 cellular confluency.
 
 ```{r}
-get_lognorm_params <- function(mean,sd){
-
-  sigma2 <- log(1+(sd/mean)^2)
-  mu <- log(mean)-sigma2/2
+get_lognorm_params <- function(mean, sd){
+  sigma2 <- log(1 + (sd / mean)^2)
+  mu <- log(mean) - sigma2 / 2
   sigma <- sqrt(sigma2)
-
-  list(meanlog=mu,sdlog=sigma)
+  list(meanlog = mu, sdlog = sigma)
 }
 
-params_t0 <- get_lognorm_params(120,75)
-params_t14 <- get_lognorm_params(600,500)
+params_t0 <- get_lognorm_params(100, 40)
+params_t14 <- get_lognorm_params(300, 150)
 
-sim_vols <- function(params,seed){
+sim_vols <- function(params, seed){
   set.seed(seed)
-  rlnorm(n_reps,params$meanlog,params$sdlog)
+  rlnorm(n_reps, params$meanlog, params$sdlog)
 }
 
-DMSO_t0 <- sim_vols(params_t0,1)
-DMSO_t14 <- sim_vols(params_t14,101)
+DMSO_t0  <- sim_vols(params_t0, 1)
+DMSO_t14 <- sim_vols(params_t14, 101)
 
-cond_means <- c(0.5,0.8,0.25)*600
-cond_params <- lapply(cond_means,get_lognorm_params,sd=500)
+TreatA_t14 <- sim_vols(get_lognorm_params(200, 120), 102)
 
-cond1_t14 <- sim_vols(cond_params[[1]],102)
-cond2_t14 <- sim_vols(cond_params[[2]],103)
-cond3_t14 <- sim_vols(cond_params[[3]],104)
-
-V_t0 <- round(c(DMSO_t0,DMSO_t0,DMSO_t0,DMSO_t0),1)
-V_t14 <- round(c(DMSO_t14,cond1_t14,cond2_t14,cond3_t14),1)
+# Combine
+V_t0  <- round(c(DMSO_t0, DMSO_t0), 1)
+V_t14 <- round(c(DMSO_t14, TreatA_t14), 1)
 ```
 
 # Constructing the barmixR Input Object
@@ -258,16 +255,21 @@ print(data)
 For demonstration purposes, we use a reduced number of posterior sampling iterations to shorten computation time.  
 In practical applications, longer sampling runs are recommended to ensure stable and well-mixed posterior estimates.
 ```{r model_fit, cache=TRUE}
+# Reduced number of posterior sampling iterations
+# to keep the vignette computationally lightweight.
+# For real analyses, increase iterations and chains
+# to ensure proper convergence and reliable inference.
+
 fit <- barmixRQTR(
-  data=data,
-  time_d=time_d,
-  control=list(
-    chains=2,
-    iter_count=500, # reduced number of posterior sampling iterations for demonstration
-    iter_V=500,     # reduced number of posterior sampling iterations for demonstration
-    cores=2
+  data = data,
+  time_d = time_d,
+  control = list(
+    chains = 1,
+    iter_count = 100,
+    iter_V = 100,
+    cores = 1
   ),
-  in_vivo=TRUE
+  in_vivo = TRUE
 )
 
 model <- fit
@@ -351,7 +353,7 @@ When visualized (e.g., as density plots or violin plots), each distribution refl
 
 # Visualization of the Resistance Landscape
 
-```{r fig.width=18, fig.height=10, out.width="100%"}
+```{r fig.width=8, fig.height=6, out.width="100%"}
 heatmap <- QTRheatmap(
   model,
   resistance$summary_table
@@ -360,7 +362,7 @@ heatmap <- QTRheatmap(
 print(heatmap$heatmap_within)
 ```
 
-```{r fig.width=6, fig.height=12, out.width="100%"}
+```{r fig.width=6, fig.height=6, out.width="100%"}
 print(heatmap$heatmap_treatment)
 ```
 
@@ -383,14 +385,13 @@ One practical goal of multiplexed barcoded experiments is to enable treatment pr
 
 The `QTRDecision()` function summarizes posterior QTR distributions for each cell line and treatment using median, interquartile range, and whiskers derived from `QTRresistance()`. This provides a compact ordering of candidate treatments within each genotype and supports comparison of drug performance across heterogeneous cell populations.
 
-```{r fig.width=18, fig.height=12, out.width="100%"}
-cell_order <- paste0("clone", 1:20)
+```{r fig.width=18, fig.height=3, out.width="100%"}
+cell_order <- paste0("clone", 1:4)
 
 decision <- QTRDecision(
   model = model,
   summary_table = resistance$summary_table,
-  cell_order = cell_order,
-  ncol = 5
+  cell_order = cell_order
   # legend_text = "DMSO = control condition"
 )
 

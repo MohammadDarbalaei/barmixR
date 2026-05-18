@@ -8,7 +8,7 @@
 #' QTR estimate. The plot displays boxplot-style summaries using the
 #' interquartile range, whiskers, and median.
 #'
-#' @param @param model An object of class \code{\link{barmixR_fit}} returned by \code{\link{barmixRQTR}}
+#' @param model An object of class \code{\link{barmixR_fit}} returned by \code{\link{barmixRQTR}}
 #'   containing \code{names_cell}.
 #'
 #' @param summary_table Data frame returned by \code{QTRresistance()}.

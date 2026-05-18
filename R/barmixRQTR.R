@@ -202,6 +202,8 @@
 #' ## inspect result
 #' names(fit)
 #' 
+#' @importFrom rstan sampling
+#' @importFrom rstantools rstan_config
 #' @export
 barmixRQTR <- function(
     data,
@@ -412,13 +414,8 @@ barmixRQTR <- function(
   }
   
   ## ---------- fit Dirichlet-multinomial model ----------
-  stan_file_counts <- system.file("stan/barcode.stan", package = "barmixR")
-  
-  .stop_if(!nzchar(stan_file_counts),
-           "Stan file for the count model was not found in package `barmixR`.")
-  
   stan_args <- list(
-    file = stan_file_counts,
+    object = stanmodels$barcode,
     data = dlist,
     chains = control$chains,
     iter = control$iter_count,
@@ -431,7 +428,7 @@ barmixRQTR <- function(
     stan_args$warmup <- control$warmup
   }
   
-  fit <- do.call(rstan::stan, stan_args)
+  fit <- do.call(rstan::sampling, stan_args)
   
   ## ---------- treatment consistency ----------
   .stop_if(!all(unique(condition_count) %in% unique(condition_v)),
@@ -460,12 +457,8 @@ barmixRQTR <- function(
     .stop_if(any(V_use <= 0),
              "Error: Tumor volume values must be strictly positive for the log-normal likelihood.")
     
-    stan_file_V <- system.file("stan/tumor_volume.stan", package = "barmixR")
-    .stop_if(!nzchar(stan_file_V),
-             "Stan file for the in vivo volume model was not found in package `barmixR`.")
-    
     stan_args_V <- list(
-      file = stan_file_V,
+      object = stanmodels$tumor_volume,
       data = dlist_volume,
       chains = control$chains,
       iter = control$iter_V,
@@ -478,17 +471,13 @@ barmixRQTR <- function(
       stan_args_V$warmup <- control$warmup
     }
     
-    fit_V <- do.call(rstan::stan, stan_args_V)
+    fit_V <- do.call(rstan::sampling, stan_args_V)
   } else {
     .stop_if(any(V_use <= 0 | V_use >= 1),
              "Error: Confluency values must be between 0 and 1 for the beta likelihood.")
     
-    stan_file_V <- system.file("stan/confluency.stan", package = "barmixR")
-    .stop_if(!nzchar(stan_file_V),
-             "Stan file for the in vitro confluency model was not found in package `barmixR`.")
-    
     stan_args_V <- list(
-      file = stan_file_V,
+      object = stanmodels$confluency,
       data = dlist_volume,
       chains = control$chains,
       iter = control$iter_V,
@@ -501,7 +490,7 @@ barmixRQTR <- function(
       stan_args_V$warmup <- control$warmup
     }
     
-    fit_V <- do.call(rstan::stan, stan_args_V)
+    fit_V <- do.call(rstan::sampling, stan_args_V)
   }
   
   ## ---------- return ----------

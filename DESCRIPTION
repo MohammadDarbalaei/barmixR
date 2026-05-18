@@ -1,7 +1,7 @@
 Package: barmixR
 Type: Package
 Title: Bayesian Modeling of Barcoded Tumor Mixtures for Quantitative Treatment Resistance Analysis
-Version: 0.99.0
+Version: 0.99.1
 Authors@R: 
     c(
       person(given = "Mohammad", family = "Darbalaei",
@@ -41,7 +41,7 @@ Description:
     gastrointestinal stromal tumors (GIST), but are broadly applicable to
     barcoding-based studies of treatment response and clonal dynamics
     across diverse cancer types.
-License: GPL-3
+License: GPL-3 + file LICENSE
 URL: https://github.com/MohammadDarbalaei/barmixR
 BugReports: https://github.com/MohammadDarbalaei/barmixR/issues
 Encoding: UTF-8
@@ -49,23 +49,38 @@ LazyData: false
 Depends:
     R (>= 4.3.0)
 Imports:
-    rstan,
-    ggplot2,
-    dplyr,
-    patchwork,
-    forcats,
+    utils,
     BiocParallel,
+    dplyr,
+    forcats,
+    ggplot2,
+    methods,
+    patchwork,
+    Rcpp (>= 0.12.0),
+    RcppParallel (>= 5.0.1),
+    rstan (>= 2.18.1),
+    rstantools (>= 2.4.0),
     stats
 Suggests:
+    MGLM,
+    tidyverse,
     knitr,
     rmarkdown,
     testthat
 VignetteBuilder: knitr
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
 biocViews:
     Software,
     Bayesian,
     Sequencing,
     Visualization
-    
+Config/roxygen2/version: 8.0.0
+Biarch: true
+LinkingTo: 
+    BH (>= 1.66.0),
+    Rcpp (>= 0.12.0),
+    RcppEigen (>= 0.3.3.3.0),
+    RcppParallel (>= 5.0.1),
+    rstan (>= 2.18.1),
+    StanHeaders (>= 2.18.0)
+SystemRequirements: GNU make

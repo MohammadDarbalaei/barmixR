@@ -5,7 +5,7 @@
 #' of barcode fractions obtained from the barmixR model.
 #'
 #' Posterior samples of barcode composition are derived from the
-#' Dirichlet–multinomial component of the model. Relative abundance
+#' Dirichlet-multinomial component of the model. Relative abundance
 #' ratios are calculated for each treatment relative to the control
 #' group and summarized using log-transformed values.
 #'
@@ -272,7 +272,7 @@ fractionRatio <- function(
     ) +
     ggplot2::labs(
       x = "Cell line",
-      y = "Ratio of relative abundances, treatment/DMSO (logₑ)",
+      y = "Ratio of relative abundances, treatment/DMSO (log_e)",
       fill = "Cell line"
     ) +
     ggplot2::theme(
