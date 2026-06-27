@@ -8,7 +8,7 @@
 #'
 #' Population size measurements correspond to tumor volume in
 #' \emph{in vivo} experiments or cellular confluency in \emph{in vitro}
-#' assays. Barcode counts are modeled using a Dirichlet–multinomial
+#' assays. Barcode counts are modeled using a Dirichlet-multinomial
 #' distribution to account for compositional sequencing data, while
 #' population size measurements are modeled using a log-normal
 #' likelihood for tumor volume (\emph{in vivo}) or a beta likelihood
@@ -51,7 +51,7 @@
 #'   group used for comparative analysis.
 #'
 #' @param dispersion A list controlling dispersion priors in the
-#'   Dirichlet–multinomial model:
+#'   Dirichlet-multinomial model:
 #'   \itemize{
 #'     \item \code{psi_mean}: Mean for the log-normal prior on the
 #'       precision parameter \code{psi} (default: 0).
@@ -115,7 +115,7 @@
 #'
 #' @return An object of class \code{barmixR_fit}. This is a list containing:
 #'   \itemize{
-#'     \item \code{fit_dir_mult}: Fitted Dirichlet–multinomial model
+#'     \item \code{fit_dir_mult}: Fitted Dirichlet-multinomial model
 #'       for barcode counts.
 #'
 #'     \item \code{fit_V}: Fitted model for population size

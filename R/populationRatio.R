@@ -252,7 +252,7 @@ populationRatio <- function(
     ggplot2::aes(x = treat, y = p_ratio)
   ) +
     ggplot2::geom_violin(
-      draw_quantiles = c(0.25, 0.5, 0.75),
+      quantiles = c(0.25, 0.5, 0.75),
       fill = "deepskyblue",
       alpha = 0.7,
       trim = FALSE

@@ -259,7 +259,7 @@ fractionRatio <- function(
       )
     ) +
     ggplot2::geom_violin(
-      draw_quantiles = c(0.25, 0.5, 0.75),
+      quantiles = c(0.25, 0.5, 0.75),
       scale = "width",
       trim = FALSE
     ) +

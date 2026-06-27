@@ -1,15 +1,20 @@
 ---
 title: "barmixR: Bayesian Modeling of Barcoded Tumor Mixtures for Quantitative Treatment Resistance Analysis"
-author: |
-  Mohammad Darbalaei  
-  Daniel Hoffmann  
-  Bioinformatics and Computational Biophysics, Faculty of Biology, University of Duisburg-Essen
-output: rmarkdown::html_vignette
+author:
+  - "Mohammad Darbalaei"
+  - "Daniel Hoffmann"
+date: "`r Sys.Date()`"
+output:
+  BiocStyle::html_document:
+    toc: true
+    toc_float: true
 vignette: >
   %\VignetteIndexEntry{barmixR: Bayesian Modeling of Barcoded Tumor Mixtures for Quantitative Treatment Resistance Analysis}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
+
+**Bioinformatics and Computational Biophysics, Faculty of Biology, University of Duisburg-Essen**
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
@@ -80,6 +85,31 @@ Examples include:
 - lineage tracing experiments
 - competitive growth assays in mixed populations
 
+# Installation
+
+`barmixR` is currently under review for inclusion in Bioconductor. During the review process, the development version can be installed from GitHub:
+
+```{r installation, eval=FALSE}
+if (!requireNamespace("remotes", quietly = TRUE)) {
+  install.packages("remotes")
+}
+
+remotes::install_github("MohammadDarbalaei/barmixR")
+```
+
+After installation, load the package with:
+
+```{r load-package}
+library(barmixR)
+```
+
+# Relationship to related approaches and packages
+
+Several related approaches support pooled barcoding and clonal tracking. For example, [PRISM](https://www.nature.com/articles/nbt.3460) uses DNA-barcoded cancer cell lines for high-throughput pooled drug screening and identification of genotype-specific cancer vulnerabilities. Related R/Bioconductor packages such as `barcodetrackR` and `barbieQ` support analysis, visualization, preprocessing, and statistical testing of barcode abundance data.
+
+A limitation of approaches based mainly on barcode abundance is that barcode counts are compositional: barcode fractions within each sample are constrained to sum to one. Therefore, relative abundance changes do not directly measure absolute clone growth.
+
+`barmixR` addresses this complementary problem by integrating barcode sequencing counts with total population size measurements, such as tumor volume or cellular confluency, in a Bayesian framework. This enables estimation of clone-specific quantitative treatment resistance (QTR) on an absolute growth scale while propagating uncertainty from both data sources.
 
 # Simulation of Barcode Counts and Population Size
 
@@ -113,7 +143,7 @@ where \(l\) indexes **cell lines** and \(k\) indexes **treatment conditions**.
 ```{r}
 library(MGLM)
 library(tidyverse)
-library(barmixR)
+
 
 set.seed(1001)
 

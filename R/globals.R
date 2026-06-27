@@ -7,6 +7,6 @@ utils::globalVariables(c(
   "treatment", "y"
 ))
 
-#' @importFrom stats ave sd
+#' @importFrom stats ave median sd
 #' @importFrom utils modifyList
 NULL

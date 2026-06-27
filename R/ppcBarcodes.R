@@ -1,7 +1,7 @@
 #' Posterior predictive checks for barcode composition
 #'
 #' Performs posterior predictive checks (PPC) for barcode composition
-#' modeled using the Dirichlet–multinomial component of the barmixR
+#' modeled using the Dirichlet-multinomial component of the barmixR
 #' model. Observed barcode counts are compared with predicted counts
 #' from the posterior distribution to assess model fit and uncertainty.
 #'
@@ -12,7 +12,7 @@
 #' @param model An object of class \code{barmixR_fit} returned by \code{barmixRQTR()}
 #'   containing:
 #'   \itemize{
-#'     \item \code{fit_dir_mult}: Fitted Dirichlet–multinomial model.
+#'     \item \code{fit_dir_mult}: Fitted Dirichlet-multinomial model.
 #'     \item \code{group}: Numeric identifiers for treatment groups.
 #'     \item \code{condition_count}: Treatment labels for barcode data.
 #'     \item \code{chains}: Number of MCMC chains used during fitting.
