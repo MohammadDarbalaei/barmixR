@@ -1,7 +1,7 @@
 Package: barmixR
 Type: Package
 Title: Bayesian Modeling of Barcoded Tumor Mixtures for Quantitative Treatment Resistance Analysis
-Version: 0.99.1
+Version: 0.99.2
 Authors@R: 
     c(
       person(given = "Mohammad", family = "Darbalaei",
